@@ -10,6 +10,7 @@ namespace PostProcessLab
     [RequireComponent(typeof(Camera))]
     public class EffectLayer : MonoBehaviour
     {
+        
         public EffectLayerProfile m_profile;
         internal Dictionary<EffectPoint, List<EffectBaseSettingWrap>> m_activeEffectsDic { get; private set; }
         public Dictionary<Type, EffectRendererBase> m_activeRendererDic { get; private set; }
@@ -18,13 +19,22 @@ namespace PostProcessLab
         private Camera m_camera;
         private CommandBuffer m_opaqueCommandBuffer;
         private CommandBuffer m_imageEffectCommandBuffer;
+        private int m_targetID = 0;
+        
 
         private void Awake()
         {
             m_context = new RenderContext();
             m_camera = this.GetComponent<Camera>();
-            m_opaqueCommandBuffer = new CommandBuffer();
-            m_imageEffectCommandBuffer = new CommandBuffer();
+            if(m_camera.actualRenderingPath == RenderingPath.Forward && !m_camera.allowHDR)
+            {
+                //BuiltinRenderTextureType.CameraTarget 在Forward渲染模式下，默认渲染到backBuffer，
+                //为了在CommandBuffer中获得相机内容，需要开启HDR或者设置摄像机camera.forceIntoRenderTexture 为true，
+                m_camera.forceIntoRenderTexture = true;
+            }
+
+            m_opaqueCommandBuffer = new CommandBuffer() { name = "opaque cmd"};
+            m_imageEffectCommandBuffer = new CommandBuffer() { name = "imageEffect cmd" };
 
             m_camera.AddCommandBuffer(CameraEvent.BeforeImageEffectsOpaque, m_opaqueCommandBuffer);
             m_camera.AddCommandBuffer(CameraEvent.BeforeImageEffects, m_imageEffectCommandBuffer);
@@ -78,10 +88,16 @@ namespace PostProcessLab
 
         private void OnPreCull()
         {
+            m_targetID = 0;
             SetContext();
-
+            
             RenderEffectPoint(EffectPoint.BeforeTransparent);
             RenderEffectPoint(EffectPoint.BeforeFinal);
+        }
+
+        private int GetRenderTargetID()
+        {
+            return Shader.PropertyToID(string.Format("TargetTex_{0}", ++m_targetID));
         }
 
         private void RenderEffectPoint(EffectPoint effectPoint)
@@ -90,12 +106,51 @@ namespace PostProcessLab
             if(m_activeEffectsDic.TryGetValue(effectPoint, out list) && list.Count > 0)
             {
                 SetContextCommandBuffer(effectPoint);
-                foreach(var setting in list)
+                var cameraTarget = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget); 
+                int tmpSRT = -1;
+                tmpSRT = GetRenderTargetID();
+                m_context.m_source = tmpSRT;
+                m_context.GetFullscreenTemporaryRT(tmpSRT, RenderTextureFormat.Default, FilterMode.Bilinear);
+                //拷贝屏幕到source
+                m_context.m_command.PostBlit(cameraTarget, tmpSRT);
+
+                int tmpTRT = -1;
+                if(list.Count > 1)
                 {
+                    tmpTRT = GetRenderTargetID();
+                    m_context.m_target = tmpTRT;
+                    m_context.GetFullscreenTemporaryRT(tmpTRT, RenderTextureFormat.ARGB32, FilterMode.Bilinear);
+                }
+                else
+                {
+                    m_context.m_target = cameraTarget;
+                }
+
+                for (int i = 0; i < list.Count; ++i)
+                {
+                    var setting = list[i];
                     if(m_activeRendererDic.ContainsKey(setting.m_rendererType))
                     {
                         m_activeRendererDic[setting.m_rendererType].BaseRender(m_context, setting.m_setting);
                     }
+
+                    //switch
+                    if(i < list.Count - 1)
+                    {
+                        var tmp = m_context.m_target;
+                        m_context.m_target = m_context.m_source;
+                        m_context.m_source = tmp;
+                    }
+                }
+                
+                if(tmpSRT > -1)
+                {
+                    m_context.m_command.ReleaseTemporaryRT(tmpSRT);
+                }
+
+                if (tmpTRT > -1)
+                {
+                    m_context.m_command.ReleaseTemporaryRT(tmpTRT);
                 }
             }
         }
@@ -112,17 +167,15 @@ namespace PostProcessLab
                     m_context.m_command = m_imageEffectCommandBuffer;
                     m_imageEffectCommandBuffer.Clear();
                     break;
-                default:
-                    break;
             }
+
+            
         }
 
         private void SetContext()
         {
             m_context.Reset();
             m_context.m_camera = m_camera;
-            m_context.m_source = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
-            m_context.m_target = m_context.m_source;
         }
     }
 }

@@ -2,30 +2,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
 namespace PostProcessLab
 {
-    [EffectSetting(typeof(TestPostEffectRenderer), EffectPoint.BeforeTransparent)]
     [Serializable]
-    public sealed class TestPostEffect : EffectBaseSetting
+    [EffectSetting(typeof(GaussianBlurRenderer), EffectPoint.BeforeFinal)]
+    public class GaussianBlur : EffectBaseSetting 
     {
         public override string m_shader
         {
             get
             {
-                return "Hidden/TestPostEffect";
+                return "Hidden/PostProcessLab/GaussianBlur";
             }
         }
+
+        
     }
 
-    public sealed class TestPostEffectRenderer : EffectRendererBase
+    public class GaussianBlurRenderer : EffectRendererBase
     {
         public override void BaseRender(RenderContext context, EffectBaseSetting setting)
         {
             var cmd = context.m_command;
-            cmd.BeginSample("TestPostEffect");
+            cmd.BeginSample("GaussianBlur");
+            //cmd.PostBlit(context.m_source, context.m_target);
             cmd.PostBlitFullScreen(context.m_source, context.m_target, setting.m_mat);
-            cmd.EndSample("TestPostEffect");
+            cmd.EndSample("GaussianBlur");
         }
     }
 }
