@@ -7,23 +7,11 @@ namespace PostProcessLab
 {
     public abstract class EffectRenderer<T> : EffectRendererBase where T : EffectBaseSetting
     {
-        public virtual void Render(RenderContext context, T setting)
-        {
-
-        }
-
-        public override void BaseRender(RenderContext context, EffectBaseSetting setting)
-        {
-#if UNITY_EDITOR && EABLE_DEBUG
-            Assert.IsNotNull(setting as T, string.Format("error setting type while need {0}", typeof(T).ToString()));            
-#endif
-            Render(context, setting as T);    
-        }
-    }
-
-    public abstract class EffectRendererBase
-    {
         public virtual void Init()
+        {
+        }
+
+        public virtual void Release()
         {
         }
 
@@ -35,11 +23,22 @@ namespace PostProcessLab
         {
 
         }
-
-        public abstract void BaseRender(RenderContext context, EffectBaseSetting setting);
-
-        public virtual void Release()
+        
+        public virtual void Render(RenderContext context, T setting)
         {
+
         }
+
+
+        public void BaseRender(RenderContext context, EffectBaseSetting setting)
+        {
+            Assert.IsNotNull(setting as T, string.Format("error setting type while need {0}", typeof(T).ToString()));            
+            Render(context, setting as T);    
+        }
+    }
+
+    public interface EffectRendererBase
+    {
+       void BaseRender(RenderContext context, EffectBaseSetting setting);
     }
 }

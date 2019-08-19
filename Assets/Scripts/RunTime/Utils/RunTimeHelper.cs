@@ -7,10 +7,10 @@ using UnityEngine.Assertions;
 
 namespace PostProcessLab
 {
-    public static class RunTimeHelper
+    internal static class RunTimeHelper
     {
         private static Mesh _fullscreenTriangle;
-        public static Mesh FullscreenTriangle
+        private static Mesh FullscreenTriangle
         {
             get
             {
@@ -33,7 +33,7 @@ namespace PostProcessLab
         }
 
         private static Material _copyMat;
-        public static Material CopyMat
+        private static Material CopyMat
         {
             get
             {
@@ -46,13 +46,24 @@ namespace PostProcessLab
             }
         }
 
-        public static T GetAttribute<T>(this Type ty) where T : Attribute
+        internal static T GetAttribute<T>(this Type ty) where T : Attribute
         {
             Assert.IsTrue(ty.IsDefined(typeof(EffectSettingAttribute), false), string.Format("{0} Attribute not found", ty)); 
             return (T)ty.GetCustomAttributes(typeof(T), false)[0];
         }
 
-        public static void PostBlit(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        private static int m_rt_id = 0;
+        internal static int GetTemporaryRTID()
+        {
+            return Shader.PropertyToID(string.Format("_PostTarget_{0}", ++m_rt_id));
+        }
+
+        internal static void ClearTemporaryRTID()
+        {
+            m_rt_id = 0;
+        }
+
+        internal static void PostBlit(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
         {
             //优化blit，target 激活是忽略对其内容的操作
             cmd.SetRenderTarget(target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
@@ -60,7 +71,7 @@ namespace PostProcessLab
             cmd.Blit(source, target, CopyMat, 0);
         }
 
-        public static void PostBlit(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Material mat, int pass = 0)
+        internal static void PostBlit(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Material mat, int pass = 0)
         {
             //优化blit，target 激活是忽略对其内容的操作
             cmd.SetRenderTarget(target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
@@ -68,7 +79,7 @@ namespace PostProcessLab
             cmd.Blit(source, target, mat, pass);
         }
 
-        public static void PostBlitFullScreen(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Material mat, int pass = 0, RenderBufferLoadAction loadAction = RenderBufferLoadAction.DontCare)
+        internal static void PostBlitFullScreen(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Material mat, int pass = 0, RenderBufferLoadAction loadAction = RenderBufferLoadAction.DontCare)
         {
             bool clear = false;
             clear = loadAction == RenderBufferLoadAction.Clear;

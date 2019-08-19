@@ -18,9 +18,9 @@ namespace PostProcessLab
         }
     }
 
-    public sealed class TestPostEffectRenderer : EffectRendererBase
+    public sealed class TestPostEffectRenderer : EffectRenderer<TestPostEffect>
     {
-        public override void BaseRender(RenderContext context, EffectBaseSetting setting)
+        public override void Render(RenderContext context, TestPostEffect setting)
         {
             var cmd = context.m_command;
             cmd.BeginSample("TestPostEffect");

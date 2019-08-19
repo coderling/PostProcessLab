@@ -19,7 +19,6 @@ namespace PostProcessLab
         private Camera m_camera;
         private CommandBuffer m_opaqueCommandBuffer;
         private CommandBuffer m_imageEffectCommandBuffer;
-        private int m_targetID = 0;
         
 
         private void Awake()
@@ -88,17 +87,13 @@ namespace PostProcessLab
 
         private void OnPreCull()
         {
-            m_targetID = 0;
+            RunTimeHelper.ClearTemporaryRTID();
             SetContext();
             
             RenderEffectPoint(EffectPoint.BeforeTransparent);
             RenderEffectPoint(EffectPoint.BeforeFinal);
         }
 
-        private int GetRenderTargetID()
-        {
-            return Shader.PropertyToID(string.Format("TargetTex_{0}", ++m_targetID));
-        }
 
         private void RenderEffectPoint(EffectPoint effectPoint)
         {
@@ -108,7 +103,7 @@ namespace PostProcessLab
                 SetContextCommandBuffer(effectPoint);
                 var cameraTarget = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget); 
                 int tmpSRT = -1;
-                tmpSRT = GetRenderTargetID();
+                tmpSRT = RunTimeHelper.GetTemporaryRTID();
                 m_context.m_source = tmpSRT;
                 m_context.GetFullscreenTemporaryRT(tmpSRT, RenderTextureFormat.Default, FilterMode.Bilinear);
                 //拷贝屏幕到source
@@ -117,7 +112,7 @@ namespace PostProcessLab
                 int tmpTRT = -1;
                 if(list.Count > 1)
                 {
-                    tmpTRT = GetRenderTargetID();
+                    tmpTRT = RunTimeHelper.GetTemporaryRTID(); 
                     m_context.m_target = tmpTRT;
                     m_context.GetFullscreenTemporaryRT(tmpTRT, RenderTextureFormat.ARGB32, FilterMode.Bilinear);
                 }
