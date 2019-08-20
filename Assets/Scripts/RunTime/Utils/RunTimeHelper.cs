@@ -46,6 +46,20 @@ namespace PostProcessLab
             }
         }
 
+        private static Material _copyMatBuiltIn;
+        private static Material CopyMatBuiltIn
+        {
+            get
+            {
+                if(_copyMatBuiltIn == null)
+                {
+                    _copyMatBuiltIn = new Material(Shader.Find("Hidden/PostProcessLab/CopyBuiltIn"));
+                }
+
+                return _copyMatBuiltIn;
+            }
+        }
+
         internal static T GetAttribute<T>(this Type ty) where T : Attribute
         {
             Assert.IsTrue(ty.IsDefined(typeof(EffectSettingAttribute), false), string.Format("{0} Attribute not found", ty)); 
@@ -68,7 +82,7 @@ namespace PostProcessLab
             //优化blit，target 激活是忽略对其内容的操作
             cmd.SetRenderTarget(target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
             target = BuiltinRenderTextureType.CurrentActive;
-            cmd.Blit(source, target, CopyMat, 0);
+            cmd.Blit(source, target, CopyMatBuiltIn);
         }
 
         internal static void PostBlit(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, Material mat, int pass = 0)
@@ -90,7 +104,12 @@ namespace PostProcessLab
             }
 
             cmd.SetGlobalTexture(ShaderIDs.ID_MainTex, source);
-            cmd.DrawMesh(FullscreenTriangle, Matrix4x4.identity, mat, 0, 0);
+            cmd.DrawMesh(FullscreenTriangle, Matrix4x4.identity, mat, 0, pass);
+        }
+
+        internal static void PostBlitFullScreen(this CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RenderBufferLoadAction loadAction = RenderBufferLoadAction.DontCare)
+        {
+            PostBlitFullScreen(cmd, source, target, CopyMat);
         }
     }
 }

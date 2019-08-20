@@ -3,7 +3,9 @@
 
 #include "PPLib.hlsl"
 
-static const half4 GaussWeight[7] =
+#define FILTER_SIZE 7
+
+static const half4 GaussWeight[FILTER_SIZE] =
 {
     half4(0.0205,0.0205,0.0205,0),
     half4(0.0855,0.0855,0.0855,0),
@@ -24,7 +26,7 @@ struct gaussianVertOut
 // = downscale * blur_radius
 float _BlurScaleValue;
 
-gaussianVertOut gaussian_v_vert()
+gaussianVertOut gaussian_v_vert(vertIn i, float2 texel_size)
 {
     gaussianVertOut o;
     o.vertex = TransVertexClip(i.vertex);
@@ -42,9 +44,18 @@ gaussianVertOut gaussian_h_vert(vertIn i, float2 texel_size)
     return o;   
 }
 
-half4 gaussian_frag(gaussianVertOut i)
+half4 gaussian_frag(TEXTURE_ARGS(tex), float2 uv, float2 offset)
 {
-    return half4(1, 0, 0, 1);
+    float2 uv_offset = uv - offset * 3;
+    
+    half4 col = half4(0, 0, 0, 0);
+    for(int i = 0; i < FILTER_SIZE; i++)
+    {
+        col += SAMPLE_TEXTURE2D(tex, uv_offset) * GaussWeight[i];
+        uv_offset += offset; 
+    }
+
+    return col;
 }
 
 #endif //PP_GAUSIANBLUR_LIB

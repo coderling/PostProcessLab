@@ -39,6 +39,7 @@ namespace PostProcessLab
 
     public interface EffectRendererBase
     {
-       void BaseRender(RenderContext context, EffectBaseSetting setting);
+        void BaseRender(RenderContext context, EffectBaseSetting setting);
+        void Update();
     }
 }

@@ -18,6 +18,10 @@ namespace PostProcessLab
             set
             {
                 _m_camera = value;
+                if(value != null)
+                {
+                    OnSetCamera();
+                }
             }
         }
 
@@ -41,8 +45,8 @@ namespace PostProcessLab
 
         private void OnSetCamera()
         {
-            m_width = m_camera.pixelWidth;
-            m_height = m_camera.pixelHeight;
+            m_width = _m_camera.pixelWidth;
+            m_height = _m_camera.pixelHeight;
             m_radio = 1.0f * m_height / m_width;
         }
 
