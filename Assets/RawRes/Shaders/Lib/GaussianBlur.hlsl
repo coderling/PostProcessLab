@@ -44,7 +44,7 @@ gaussianVertOut gaussian_h_vert(vertIn i, float2 texel_size)
     return o;   
 }
 
-half4 gaussian_frag(TEXTURE_ARGS(tex), float2 uv, float2 offset)
+half4 gaussian_frag(TEXTURE2D_ARGS(tex), float2 uv, float2 offset)
 {
     float2 uv_offset = uv - offset * 3;
     

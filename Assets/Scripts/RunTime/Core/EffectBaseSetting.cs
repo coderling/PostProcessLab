@@ -9,13 +9,14 @@ namespace PostProcessLab
     [Serializable]
     public class EffectBaseSetting : ScriptableObject 
     {
+        [HideInInspector]
         public int tt = 0;
         public virtual string m_shader
         {
             get;
         }
 
-        private Material _m_mat;
+        private static Material _m_mat;
         public Material m_mat
         {
             get

@@ -17,12 +17,15 @@ namespace PostProcessLab
         }
 
         //模糊半径
+        [Range(1, 10)]
         public float m_blur_radius = 1.0f;
 
         //下采样比例指数，2的n次方
+        [Range(0, 10)]
         public int m_down_ex = 1;
 
         //模糊次数
+        [Range(1, 10)]
         public int m_blur_times = 1;
     }
 
@@ -30,7 +33,8 @@ namespace PostProcessLab
     {
         private enum PassIndex
         {
-            DS = 0, //downsample
+            DS = 0,
+            DSBetter,
             VBlur,
             HBlur,
         }
@@ -51,6 +55,7 @@ namespace PostProcessLab
             int blurRT1 = RunTimeHelper.GetTemporaryRTID();
             context.GetScreenScaleTemporaryRT(blurRT1, scale);
             cmd.PostBlitFullScreen(context.m_source, blurRT1, setting.m_mat, (int)PassIndex.DS);
+
             int blurRT2 = RunTimeHelper.GetTemporaryRTID();
             context.GetScreenScaleTemporaryRT(blurRT2, scale);
             float blurScale = setting.m_blur_radius * scale;
