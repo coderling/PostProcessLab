@@ -3,17 +3,16 @@
 
 #include "PPLib.hlsl"
 
-#define FILTER_SIZE 7
+#define FILTER_SIZE 5
 
-static const half4 GaussWeight[FILTER_SIZE] =
+//9 Tap Filter
+static const half GaussWeight[5] =
 {
-    half4(0.0205,0.0205,0.0205,0),
-    half4(0.0855,0.0855,0.0855,0),
-    half4(0.232,0.232,0.232,0),
-    half4(0.324,0.324,0.324,1),
-    half4(0.232,0.232,0.232,0),
-    half4(0.0855,0.0855,0.0855,0),
-    half4(0.0205,0.0205,0.0205,0)
+    0.2270270270, // 0
+    0.1945945946, // 1 / -1
+    0.1216216216, // 2 / -2
+    0.0540540541, // 3 / -3
+    0.0162162162  // 4 / -4
 };
 
 struct gaussianVertOut
@@ -46,13 +45,13 @@ gaussianVertOut gaussian_h_vert(vertIn i, float2 texel_size)
 
 half4 gaussian_frag(TEXTURE2D_ARGS(tex), float2 uv, float2 offset)
 {
-    float2 uv_offset = uv - offset * 3;
-    
-    half4 col = half4(0, 0, 0, 0);
-    for(int i = 0; i < FILTER_SIZE; i++)
+    half4 col = SAMPLE_TEXTURE2D(tex, uv) * GaussWeight[0];
+    float2 t_offset = offset;
+    for(int i = 1; i < FILTER_SIZE; i++)
     {
-        col += SAMPLE_TEXTURE2D(tex, uv_offset) * GaussWeight[i];
-        uv_offset += offset; 
+        col += SAMPLE_TEXTURE2D(tex, uv + t_offset) * GaussWeight[i];
+        col += SAMPLE_TEXTURE2D(tex, uv - t_offset) * GaussWeight[i];
+        t_offset += offset; 
     }
 
     return col;

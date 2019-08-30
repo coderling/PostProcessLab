@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+
+/// <summary>
+/// ref:
+/// [1]http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+/// </summary>
+
 namespace PostProcessLab
 {
     [Serializable]
@@ -70,7 +76,6 @@ namespace PostProcessLab
             cmd.PostBlitFullScreen(blurRT1, context.m_target);
             cmd.ReleaseTemporaryRT(blurRT1);
             cmd.ReleaseTemporaryRT(blurRT2);
-
             cmd.EndSample("GaussianBlur");
         }
     }

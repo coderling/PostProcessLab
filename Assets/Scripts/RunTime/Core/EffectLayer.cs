@@ -101,6 +101,7 @@ namespace PostProcessLab
             if(m_activeEffectsDic.TryGetValue(effectPoint, out list) && list.Count > 0)
             {
                 SetContextCommandBuffer(effectPoint);
+                m_context.m_command.BeginSample(string.Format("PostProcess_{0}", effectPoint));
                 var cameraTarget = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget); 
                 int tmpSRT = -1;
                 tmpSRT = RunTimeHelper.GetTemporaryRTID();
@@ -147,6 +148,8 @@ namespace PostProcessLab
                 {
                     m_context.m_command.ReleaseTemporaryRT(tmpTRT);
                 }
+
+                m_context.m_command.EndSample(string.Format("PostProcess_{0}", effectPoint));
             }
         }
 
